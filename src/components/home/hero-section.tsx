@@ -65,8 +65,11 @@ export default function HeroSection() {
               {/* Price tag floating */}
               <div className="absolute -bottom-4 -left-4 rounded-2xl border border-[var(--color-border)] bg-white px-5 py-3 shadow-[var(--shadow-md)]">
                 <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted-dim)]">السعر</p>
-                <p className="text-2xl font-bold text-[var(--color-primary)]" style={{ fontFamily: "var(--font-tajawal)" }}>$20</p>
-                <p className="text-[10px] text-emerald-600 font-semibold">توصيل مجاني</p>
+                <div className="mt-1 space-y-0.5">
+                  <p className="text-sm font-bold text-[var(--color-foreground)]">قطعة $20 <span className="text-[10px] font-normal text-emerald-600">توصيل مجاني</span></p>
+                  <p className="text-sm font-bold text-[var(--color-primary)]">قطعتان $36 <span className="text-[10px] font-normal text-emerald-600">توصيل مجاني</span></p>
+                  <p className="text-sm font-bold text-[var(--color-primary)]">٣ قطع $52 <span className="text-[10px] font-normal text-emerald-600">توصيل مجاني</span></p>
+                </div>
               </div>
 
               {/* 100% natural badge floating */}

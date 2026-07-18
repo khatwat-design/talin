@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatCurrency } from "@/lib/products";
 import { useCart } from "@/components/cart-context";
 import { useProducts } from "@/lib/use-products";
 import { trackAddToCart } from "@/lib/pixels";
@@ -94,10 +93,22 @@ export default function Home() {
                     {heroProduct.description}
                   </p>
                   <div className="mt-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)] p-5">
-                    <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-dim)]">السعر</p>
-                    <p className="mt-2 text-3xl font-bold tabular-nums text-[var(--color-primary)] md:text-4xl" style={{ fontFamily: "var(--font-tajawal)" }}>
-                      {formatCurrency(heroProduct.price)}
-                    </p>
+                    <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-dim)]">الأسعار</p>
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-sm font-semibold text-[var(--color-foreground)]">قطعة ١</span>
+                        <span className="text-lg font-bold text-[var(--color-primary)]">$20</span>
+                      </div>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-sm font-semibold text-[var(--color-foreground)]">قطعتان</span>
+                        <span className="text-lg font-bold text-[var(--color-primary)]">$36</span>
+                      </div>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-sm font-semibold text-[var(--color-foreground)]">٣ قطع</span>
+                        <span className="text-lg font-bold text-[var(--color-primary)]">$52</span>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-[11px] font-semibold text-emerald-600">توصيل مجاني — الدفع عند الاستلام</p>
                   </div>
                   <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <button

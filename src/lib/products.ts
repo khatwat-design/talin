@@ -1,3 +1,9 @@
+export type Bundle = {
+  quantity: number;
+  price: number;
+  label: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -9,6 +15,7 @@ export type Product = {
   /** صور إضافية لصفحة المنتج (غير الصورة الرئيسية) */
   gallery?: string[];
   isVisible?: boolean;
+  bundles?: Bundle[];
 };
 
 const storeLocale =

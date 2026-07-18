@@ -5,6 +5,12 @@ const whatsappLink = whatsappNumber
   ? `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent("مرحباً، أريد طلب زيت تالين بيوتي")}`
   : "#";
 
+const bundles = [
+  { qty: "قطعة ١", price: "$20" },
+  { qty: "قطعتان", price: "$36" },
+  { qty: "٣ قطع", price: "$52" },
+];
+
 export default function OrderCtaSection() {
   return (
     <section className="relative overflow-hidden bg-[#0f0f0f] py-20 sm:py-28">
@@ -20,14 +26,28 @@ export default function OrderCtaSection() {
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2
-            className="mt-3 text-2xl font-bold text-white sm:text-3xl"
+            className="text-2xl font-bold text-white sm:text-3xl"
             style={{ fontFamily: "var(--font-tajawal)" }}
           >
             اطلبي الآن
           </h2>
-          <p className="mt-4 text-sm leading-relaxed text-white/40 sm:text-base">
+          <p className="mt-3 text-sm leading-relaxed text-white/40 sm:text-base">
             الدفع عند الاستلام — شحن مجاني لجميع أنحاء سوريا
           </p>
+
+          {/* Bundles */}
+          <div className="mx-auto mt-8 grid max-w-sm grid-cols-3 gap-3">
+            {bundles.map((b) => (
+              <div
+                key={b.qty}
+                className="rounded-xl border border-white/[0.06] p-4 transition-all duration-300 hover:border-[var(--color-primary)]/30"
+              >
+                <p className="text-xs text-white/35">{b.qty}</p>
+                <p className="mt-1 text-xl font-bold text-[var(--color-primary)]">{b.price}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[11px] font-semibold text-emerald-600">توصيل مجاني على جميع الباقات</p>
 
           <a
             href={whatsappLink}

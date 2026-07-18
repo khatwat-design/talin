@@ -11,6 +11,11 @@
       "/products/talin-hair-oil-03.png",
       "/products/talin-hair-oil-04.png",
       "/products/talin-hair-oil-05.png"
+    ],
+    "bundles": [
+      { "quantity": 1, "price": 20, "label": "قطعة ١" },
+      { "quantity": 2, "price": 36, "label": "قطعتان" },
+      { "quantity": 3, "price": 52, "label": "٣ قطع" }
     ]
   }
 ]
