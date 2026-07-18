@@ -1,8 +1,10 @@
-# متجر كاسكو
+# متجر طالين بيوتي (Talin Beauty)
 
-نسخة متجر إلكتروني مخصصة لعميل كاسكو — بدون لوحة إدارة. تشغيل المتجر فقط مع ربط تلجرام، Google Sheets، وبكسل فيسبوك.
+نسخة متجر إلكتروني مبنية على قالب [kasko](https://github.com/khatwat-design/kasko) — بدون لوحة إدارة. تشغيل المتجر مع ربط تلجرام وGoogle Sheets (وGoogle Analytics اختيارياً).
 
 ## التشغيل
+
+يتطلب المشروع **Node.js 18.18 أو أحدث** (مثلاً 18.20 أو 20 LTS).
 
 ```bash
 npm install
@@ -13,17 +15,17 @@ npm run dev
 
 ## الإعدادات (البيئة)
 
-1. انسخ `ENV_EXAMPLE.txt` إلى `.env.local`.
+1. انسخ `.env.example` إلى `.env.local`.
 2. عدّل المتغيرات:
    - **TELEGRAM_BOT_TOKEN** و **TELEGRAM_CHANNEL_ID**: لإرسال الطلبات إلى قناة/مجموعة تلجرام.
-   - **GOOGLE_APPS_SCRIPT_URL**: رابط Web App من Google Apps Script لحفظ الطلبات في Google Sheet.
+   - **GOOGLE_APPS_SCRIPT_URL**: رابط Web App من Google Apps Script لحفظ الطلبات في Google Sheet (انظر `scripts/google-apps-script-talin.gs`).
+   - **GOOGLE_APPS_SCRIPT_SECRET**: (اختياري) إن فعّلت `WEBHOOK_SECRET` في Apps Script.
    - **NEXT_PUBLIC_GA_ID**: (اختياري) معرف Google Analytics.
-   - **NEXT_PUBLIC_META_PIXEL_ID**: (اختياري) معرف بكسل فيسبوك/ميتا.
 
 ## الشعار والمنتجات
 
-- **الشعار**: ضع شعار كاسكو في `public/images/logo.png`.
-- **المنتجات**: عدّل `data/products.json` — أضف أو عدّل المنتجات (id, name, description, price, badge, category, image). ضع صور المنتجات في `public/products/` أو استخدم مسارات خارجية في حقل `image`.
+- **الشعار**: عدّل `public/images/logo.svg` أو ضع `public/images/logo.png` وغيّر المسار في `header.tsx` و`footer.tsx`.
+- **المنتجات**: عدّل `data/products.json` — أضف أو عدّل المنتجات (id, name, description, price, badge, category, image). يمكن وضع الصور في `public/products/` أو استخدام روابط خارجية (مثل Unsplash) مع إضافة النطاق في `next.config.ts` ضمن `images.remotePatterns`.
 
 ## البناء والنشر
 

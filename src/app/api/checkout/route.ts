@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { addOrderToGoogleSheets } from "@/lib/google-sheets";
+import { getShippingFeeForCity } from "@/lib/shipping-syria";
 
 export const runtime = "nodejs";
 
@@ -10,8 +11,6 @@ type OrderPayload = {
     phone: string;
     city: string;
     address: string;
-    carType?: string;
-    carModel?: string;
     notes?: string;
     paymentMethod?: string;
   };
@@ -28,6 +27,8 @@ type OrderPayload = {
     total: number;
     totalItems: number;
   };
+  /** يُعاد حسابه على الخادم من المدينة */
+  shipping?: { city: string; costSyp: number };
   channel?: string;
 };
 
@@ -38,45 +39,48 @@ const REQUIRED_FIELDS = [
   "TELEGRAM_CHANNEL_ID",
 ];
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("ar-IQ", {
-    style: "currency",
-    currency: "IQD",
-    maximumFractionDigits: 0,
-  }).format(amount);
+const storeCurrency = process.env.NEXT_PUBLIC_STORE_CURRENCY?.trim() || "USD";
+
+const formatMoney = (amount: number) => {
+  if (storeCurrency === "USD") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+  return `${new Intl.NumberFormat("ar-SY", { maximumFractionDigits: 0 }).format(amount)} ل.س`;
+};
 
 const buildTelegramMessage = (payload: OrderPayload, invoiceId: string) => {
   const itemsText = payload.items
     .map(
       (item, index) =>
-        `${index + 1}. ${item.name} — ${item.quantity} × ${formatCurrency(
+        `${index + 1}. ${item.name} — ${item.quantity} × ${formatMoney(
           item.price,
-        )} = ${formatCurrency(item.subtotal)}`,
+        )} = ${formatMoney(item.subtotal)}`,
     )
     .join("\n");
 
   const message = [
-    `🛍️ طلب جديد من متجر كاسكو 🏪`,
+    `🛍️ طلب جديد من متجر طالين بيوتي 💄`,
     `📋 رقم الفاتورة: ${invoiceId}`,
     `👤 اسم العميل: ${payload.customer.name}`,
     `📱 رقم الهاتف: ${payload.customer.phone}`,
-    `📍 المدينة: ${payload.customer.city}`,
-    `🏠 المنطقة: ${payload.customer.address}`,
-    `🚗 نوع السيارة: ${payload.customer.carType || "—"}`,
-    `🚙 موديل السيارة: ${payload.customer.carModel || "—"}`,
+    `📍 المحافظة / المدينة: ${payload.customer.city}`,
+    `🏠 العنوان / المنطقة: ${payload.customer.address}`,
     `💳 طريقة الدفع: ${payload.customer.paymentMethod || "الدفع عند الاستلام"}`,
     `📝 ملاحظات: ${payload.customer.notes || "لا توجد ملاحظات"}`,
     "",
     "🛒 تفاصيل الطلب:",
     itemsText,
     "",
-    `💰 المجموع الفرعي: ${formatCurrency(payload.summary.subtotal)}`,
-    `🚚 رسوم التوصيل: ${formatCurrency(payload.summary.deliveryFee)}`,
-    `💵 الإجمالي: ${formatCurrency(payload.summary.total)}`,
+    `💰 المجموع الفرعي: ${formatMoney(payload.summary.subtotal)}`,
+    `💵 الإجمالي النهائي: ${formatMoney(payload.summary.total)}`,
     `📦 عدد المنتجات: ${payload.summary.totalItems}`,
     "",
     `🔗 القناة: ${payload.channel || "الموقع الإلكتروني"}`,
-    `📅 التاريخ: ${new Date().toLocaleDateString('ar-IQ')} ${new Date().toLocaleTimeString('ar-IQ')}`,
+    `📅 التاريخ: ${new Date().toLocaleDateString('ar-SY')} ${new Date().toLocaleTimeString('ar-SY')}`,
   ].join("\n");
 
   return message;
@@ -133,8 +137,34 @@ export async function POST(request: Request) {
       );
     }
 
+    const shippingFee = getShippingFeeForCity(payload.customer.city);
+    if (shippingFee === null) {
+      return NextResponse.json(
+        { message: "يرجى اختيار مدينة صالحة من القائمة." },
+        { status: 400 },
+      );
+    }
+
+    const subtotal = payload.summary.subtotal;
+    const deliveryFee = shippingFee;
+    const total = subtotal + deliveryFee;
+
+    const normalizedPayload: OrderPayload = {
+      ...payload,
+      summary: {
+        ...payload.summary,
+        subtotal,
+        deliveryFee,
+        total,
+      },
+      shipping: {
+        city: payload.customer.city,
+        costSyp: deliveryFee,
+      },
+    };
+
     const invoiceId = randomUUID().slice(0, 8).toUpperCase();
-    const telegramResult = await sendTelegramMessage(payload, invoiceId);
+    const telegramResult = await sendTelegramMessage(normalizedPayload, invoiceId);
 
     if (!telegramResult.ok) {
       const reason = typeof telegramResult.reason === "string" ? telegramResult.reason : "";
@@ -156,8 +186,8 @@ export async function POST(request: Request) {
     // إضافة الطلب إلى Google Sheets
     try {
       await addOrderToGoogleSheets({
-        ...payload,
-        invoiceId
+        ...normalizedPayload,
+        invoiceId,
       });
     } catch (error) {
       console.error('Failed to add order to Google Sheets:', error);
@@ -167,7 +197,7 @@ export async function POST(request: Request) {
       message: "تم استلام طلبك بنجاح.",
       invoiceId,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { message: "تعذر معالجة الطلب حالياً." },
       { status: 500 },

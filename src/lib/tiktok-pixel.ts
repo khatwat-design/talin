@@ -1,6 +1,5 @@
 /**
  * TikTok Pixel - أحداث تيك توك للتتبع والإعلانات
- * Standard events: https://ads.tiktok.com/help/article/standard-events
  */
 
 type PixelItem = {
@@ -29,6 +28,8 @@ const getTtq = () => {
   return ttq && typeof ttq.track === "function" ? ttq : null;
 };
 
+const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY?.trim() || "USD";
+
 export const trackAddToCart = (item: PixelItem) => {
   const ttq = getTtq();
   if (!ttq) return;
@@ -40,7 +41,7 @@ export const trackAddToCart = (item: PixelItem) => {
     content_type: "product",
     ...(item.category && { content_category: item.category }),
     value,
-    currency: "IQD",
+    currency,
     quantity,
   });
 };
@@ -51,7 +52,7 @@ export const trackInitiateCheckout = (payload: PixelPayload) => {
   ttq.track("InitiateCheckout", {
     content_type: "product",
     value: payload.total ?? 0,
-    currency: "IQD",
+    currency,
     contents: payload.items.map((i) => ({
       content_id: i.id,
       quantity: i.quantity ?? 1,
@@ -66,7 +67,7 @@ export const trackPurchase = (payload: PixelPayload) => {
   ttq.track("CompletePayment", {
     content_type: "product",
     value: payload.total ?? 0,
-    currency: "IQD",
+    currency,
     order_id: payload.orderId,
     contents: payload.items.map((i) => ({
       content_id: i.id,
@@ -87,7 +88,7 @@ export const trackViewContent = (item: PixelItem) => {
     content_type: "product",
     ...(item.category && { content_category: item.category }),
     value,
-    currency: "IQD",
+    currency,
     quantity,
   });
 };
@@ -98,7 +99,7 @@ export const trackAddPaymentInfo = (payload: PixelPayload) => {
   ttq.track("AddPaymentInfo", {
     content_type: "product",
     value: payload.total ?? 0,
-    currency: "IQD",
+    currency,
     contents: payload.items.map((i) => ({
       content_id: i.id,
       quantity: i.quantity ?? 1,

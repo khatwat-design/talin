@@ -7,28 +7,22 @@ import { formatCurrency } from "@/lib/products";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/components/cart-context";
 import { trackInitiateCheckout, trackAddPaymentInfo } from "@/lib/pixels";
+import { SYRIA_SHIPPING_OPTIONS, getShippingFeeForCity } from "@/lib/shipping-syria";
 
 type CheckoutStatus = "idle" | "loading" | "success" | "error";
 
-// دالة للتحقق من رقم الهاتف العراقي
-const validateIraqiPhone = (phone: string): boolean => {
-  const iraqiPhoneRegex = /^(07|00964|9647)?[3-9]\d{8}$/;
-  return iraqiPhoneRegex.test(phone.replace(/\s/g, ''));
+const validateSyrianPhone = (phone: string): boolean => {
+  const p = phone.replace(/\s/g, "");
+  return /^09\d{8}$/.test(p);
 };
 
-// دالة لتنسيق رقم الهاتف
-const formatPhoneNumber = (phone: string): string => {
-  let cleaned = phone.replace(/\s/g, '');
-  if (cleaned.startsWith('00964')) {
-    return cleaned.replace('00964', '0');
-  }
-  if (cleaned.startsWith('964')) {
-    return cleaned.replace('964', '0');
-  }
-  if (cleaned.startsWith('07')) {
-    return cleaned;
-  }
-  return cleaned;
+const formatSyrianPhoneNumber = (phone: string): string => {
+  let p = phone.replace(/\s/g, "");
+  if (p.startsWith("+963")) p = `0${p.slice(4)}`;
+  else if (p.startsWith("00963")) p = `0${p.slice(5)}`;
+  else if (p.startsWith("963") && p.length >= 10) p = `0${p.slice(3)}`;
+  if (/^9\d{8}$/.test(p)) p = `0${p}`;
+  return p;
 };
 
 export default function CheckoutPage() {
@@ -38,6 +32,7 @@ export default function CheckoutPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
+  const [selectedCity, setSelectedCity] = useState("");
 
   useEffect(() => {
     fetch("/api/products")
@@ -47,19 +42,14 @@ export default function CheckoutPage() {
   }, []);
 
   const cartItems = useMemo(
-    () =>
-      products
-        .filter((product) => items[product.id])
-        .map((product) => ({
-          ...product,
-          quantity: items[product.id],
-          subtotal: items[product.id] * product.price,
-        })),
+    () => products.filter((product) => items[product.id]).map((product) => ({
+      ...product, quantity: items[product.id], subtotal: items[product.id] * product.price,
+    })),
     [items, products],
   );
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const deliveryFee = 0;
+  const deliveryFee = useMemo(() => (selectedCity ? getShippingFeeForCity(selectedCity) ?? 0 : 0), [selectedCity]);
   const total = subtotal + deliveryFee;
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const firedCheckoutEvent = useRef(false);
@@ -67,286 +57,109 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!cartItems.length || firedCheckoutEvent.current) return;
-    trackInitiateCheckout({
-      items: cartItems.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-      })),
-      total,
-    });
+    trackInitiateCheckout({ items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })), total });
     firedCheckoutEvent.current = true;
   }, [cartItems, total]);
 
   useEffect(() => {
     if (!cartItems.length || firedPaymentInfoEvent.current) return;
-    trackAddPaymentInfo({
-      items: cartItems.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-      })),
-      total,
-    });
+    trackAddPaymentInfo({ items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })), total });
     firedPaymentInfoEvent.current = true;
   }, [cartItems, total]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const phone = e.target.value;
     setPhoneError("");
-    
     if (phone.length > 0) {
-      const formatted = formatPhoneNumber(phone);
+      const formatted = formatSyrianPhoneNumber(phone);
       e.target.value = formatted;
-      
-      if (!validateIraqiPhone(formatted)) {
-        setPhoneError("رقم الهاتف يجب أن starts with 07 ويحتوي على 11 رقم");
+      if (formatted.length > 0 && !validateSyrianPhone(formatted)) {
+        setPhoneError("رقم الهاتف يجب أن يكون بنمط الأرقام السورية: يبدأ بـ 09 و10 أرقام");
       }
     }
   };
 
   const handleCheckout = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!cartItems.length) {
-      setStatus("error");
-      setStatusMessage("السلة فارغة. أضف منتجات قبل إتمام الطلب.");
-      return;
-    }
-
+    if (!cartItems.length) { setStatus("error"); setStatusMessage("السلة فارغة."); return; }
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    const phone = formatPhoneNumber(String(form.get("phone") || ""));
-    
-    if (!validateIraqiPhone(phone)) {
-      setPhoneError("رقم الهاتف غير صحيح. يجب أن يبدأ بـ 07 ويحتوي على 11 رقم");
-      return;
-    }
+    const phone = formatSyrianPhoneNumber(String(form.get("phone") || ""));
+    if (!validateSyrianPhone(phone)) { setPhoneError("رقم الهاتف غير صحيح. استخدم: 09xxxxxxxx"); return; }
+    const shippingCost = getShippingFeeForCity(selectedCity);
+    if (!selectedCity || shippingCost === null) { setStatus("error"); setStatusMessage("يرجى اختيار المحافظة."); return; }
 
-    setStatus("loading");
-    setStatusMessage("جارٍ إرسال الطلب...");
-
+    setStatus("loading"); setStatusMessage("جارٍ إرسال الطلب...");
     const orderPayload = {
-      customer: {
-        name: String(form.get("name") || ""),
-        phone: phone,
-        city: String(form.get("city") || ""),
-        address: String(form.get("address") || ""),
-        carType: String(form.get("carType") || ""),
-        carModel: String(form.get("carModel") || ""),
-        notes: String(form.get("notes") || ""),
-        paymentMethod: "cod", // الدفع عند الاستلام فقط
-      },
-      items: cartItems.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        subtotal: item.subtotal,
-      })),
-      summary: {
-        subtotal,
-        deliveryFee,
-        total,
-        totalItems,
-      },
-      channel: "kasco-web",
+      customer: { name: String(form.get("name") || ""), phone, city: selectedCity, address: String(form.get("address") || ""), notes: String(form.get("notes") || ""), paymentMethod: "cod" },
+      items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity, subtotal: item.subtotal })),
+      summary: { subtotal, deliveryFee: shippingCost, total: subtotal + shippingCost, totalItems },
+      shipping: { city: selectedCity, costSyp: shippingCost },
+      channel: "talin-web",
     };
 
     try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderPayload),
-      });
-
+      const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orderPayload) });
       let result: { message?: string; invoiceId?: string } | null = null;
-      try {
-        result = (await response.json()) as { message?: string; invoiceId?: string };
-      } catch {
-        result = null;
-      }
-
-      if (!response.ok) {
-        setStatus("error");
-        setStatusMessage(result?.message || "تعذر إرسال الطلب.");
-        return;
-      }
-
-      setStatus("success");
-      setStatusMessage(result?.message || "تم استلام طلبك بنجاح.");
+      try { result = (await response.json()) as { message?: string; invoiceId?: string }; } catch { result = null; }
+      if (!response.ok) { setStatus("error"); setStatusMessage(result?.message || "تعذر إرسال الطلب."); return; }
+      setStatus("success"); setStatusMessage(result?.message || "تم استلام طلبك.");
       if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          "kasco-last-order",
-          JSON.stringify({
-            total,
-            items: cartItems.map((item) => ({
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-            })),
-          }),
-        );
+        window.localStorage.setItem("talin-last-order", JSON.stringify({ total, items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })) }));
       }
-      clear();
-      formElement.reset();
-      router.push(
-        `/checkout/success${result?.invoiceId ? `?invoice=${result.invoiceId}` : ""}`,
-      );
-    } catch (error) {
-      setStatus("error");
-      setStatusMessage("حدث خطأ غير متوقع، حاول مجدداً.");
-    }
+      clear(); setSelectedCity(""); formElement.reset();
+      router.push(`/checkout/success${result?.invoiceId ? `?invoice=${result.invoiceId}` : ""}`);
+    } catch { setStatus("error"); setStatusMessage("حدث خطأ، حاول مجدداً."); }
   };
+
+  const inputClass = "w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-foreground)] outline-none placeholder:text-[var(--color-muted-dim)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--focus-ring)]";
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
-      <form
-        onSubmit={handleCheckout}
-        className="rounded-3xl border border-[var(--color-border)] bg-white p-8 shadow-[var(--shadow-soft)]"
-      >
+      <form onSubmit={handleCheckout} className="rounded-3xl border border-[var(--color-border)] bg-white p-8 shadow-[var(--shadow-soft)]">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-900">إتمام الطلب</h1>
-          <Link href="/cart" className="text-sm text-[var(--color-muted)]">
-            العودة للسلة
-          </Link>
+          <h1 className="text-2xl font-bold text-[var(--color-foreground)]" style={{ fontFamily: "var(--font-tajawal)" }}>إتمام الطلب</h1>
+          <Link href="/cart" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-primary)]">العودة للسلة</Link>
         </div>
-        <p className="mt-2 text-sm text-[var(--color-muted)]">
-          أدخل معلوماتك ليتم تجهيز الطلب والتواصل معك للتأكيد.
-        </p>
+        <p className="mt-2 text-sm text-[var(--color-muted)]">أدخل معلوماتك ليتم تجهيز الطلب والتواصل معك للتأكيد.</p>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-xs text-[var(--color-muted)]">
-              الاسم الكامل *
-            </label>
-            <input
-              name="name"
-              required
-              className="w-full rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-indigo-100"
-              placeholder="مثال: أحمد خالد"
-            />
+            <label className="text-xs font-medium text-[var(--color-foreground)]">الاسم الكامل *</label>
+            <input name="name" required className={inputClass} placeholder="مثال: أحمد خالد" />
           </div>
           <div className="space-y-2">
-            <label className="text-xs text-[var(--color-muted)]">
-              رقم الموبايل العراقي *
-            </label>
-            <input
-              name="phone"
-              required
-              className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-100 ${
-                phoneError 
-                  ? 'border-red-500 focus:border-red-500' 
-                  : 'border-[var(--color-border)] focus:border-[var(--color-primary)]'
-              }`}
-              placeholder="07xxxxxxxxx"
-              inputMode="tel"
-              onChange={handlePhoneChange}
-            />
-            {phoneError && (
-              <p className="text-xs text-red-500 mt-1">{phoneError}</p>
-            )}
+            <label className="text-xs font-medium text-[var(--color-foreground)]">رقم الهاتف *</label>
+            <p className="text-[11px] leading-4 text-[var(--color-muted-dim)]">09xxxxxxxx — 10 أرقام</p>
+            <input name="phone" required className={`${inputClass} ${phoneError ? "border-red-500 focus:border-red-500" : ""}`} placeholder="09xxxxxxxx" inputMode="tel" autoComplete="tel" onChange={handlePhoneChange} />
+            {phoneError && <p className="mt-1 text-xs text-red-500">{phoneError}</p>}
           </div>
-          <div className="space-y-2">
-            <label className="text-xs text-[var(--color-muted)]">المدينة *</label>
-            <select
-              name="city"
-              required
-              className="w-full rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-indigo-100"
-              defaultValue=""
-            >
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-xs font-medium text-[var(--color-foreground)]">المحافظة / المدينة *</label>
+            <select name="city" required value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className={`${inputClass} appearance-none`}>
               <option value="" disabled>اختر المدينة</option>
-              <option value="بغداد">بغداد</option>
-              <option value="البصرة">البصرة</option>
-              <option value="أربيل">أربيل</option>
-              <option value="السليمانية">السليمانية</option>
-              <option value="دهوك">دهوك</option>
-              <option value="نينوى">نينوى</option>
-              <option value="كركوك">كركوك</option>
-              <option value="الأنبار">الأنبار</option>
-              <option value="ديالى">ديالى</option>
-              <option value="بابل">بابل</option>
-              <option value="واسط">واسط</option>
-              <option value="المثنى">المثنى</option>
-              <option value="ذي قار">ذي قار</option>
-              <option value="القادسية">القادسية</option>
-              <option value="ميسان">ميسان</option>
-              <option value="صلاح الدين">صلاح الدين</option>
-              <option value="كربلاء">كربلاء</option>
-              <option value="المثنى">المثنى</option>
+              {SYRIA_SHIPPING_OPTIONS.map(({ city }) => (
+                <option key={city} value={city}>{city}</option>
+              ))}
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-xs text-[var(--color-muted)]">
-              طريقة الدفع
-            </label>
-            <div className="w-full rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm bg-gray-50">
-              الدفع عند الاستلام
-            </div>
+            <label className="text-xs font-medium text-[var(--color-foreground)]">طريقة الدفع</label>
+            <div className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)] px-4 py-3 text-sm text-[var(--color-muted)]">الدفع عند الاستلام</div>
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="text-xs text-[var(--color-muted)]">المنطقة *</label>
-            <input
-              name="address"
-              required
-              className="w-full rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-indigo-100"
-              placeholder="الحي، الشارع، أو اسم المنطقة"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs text-[var(--color-muted)]">نوع السيارة</label>
-            <input
-              name="carType"
-              type="text"
-              className="w-full rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-indigo-100"
-              placeholder="مثال: تويوتا، هيونداي"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs text-[var(--color-muted)]">موديل السيارة</label>
-            <input
-              name="carModel"
-              type="text"
-              className="w-full rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-indigo-100"
-              placeholder="مثال: كامري 2020، سنتافي 2022"
-            />
+            <label className="text-xs font-medium text-[var(--color-foreground)]">المنطقة *</label>
+            <input name="address" required className={inputClass} placeholder="الحي، الشارع، أو اسم المنطقة" />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="text-xs text-[var(--color-muted)]">
-              ملاحظات إضافية (اختياري)
-            </label>
-            <textarea
-              name="notes"
-              rows={3}
-              className="w-full rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-indigo-100"
-              placeholder="اترك ملاحظات التوصيل إن وجدت"
-            />
+            <label className="text-xs font-medium text-[var(--color-foreground)]">ملاحظات إضافية (اختياري)</label>
+            <textarea name="notes" rows={3} className={inputClass} placeholder="اترك ملاحظات التوصيل إن وجدت" />
           </div>
         </div>
-
-        <div className="mt-6 rounded-2xl border border-dashed border-[var(--color-border)] p-4 text-xs text-[var(--color-muted)]">
-          سيتم تأكيد الطلب عبر رسالة بعد الإرسال مباشرة.
-        </div>
-
-        <button
-          type="submit"
-          className="mt-6 w-full rounded-2xl bg-[var(--color-primary)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-600)] disabled:cursor-not-allowed disabled:bg-slate-300"
-          disabled={status === "loading"}
-        >
+        <button type="submit" className="mt-6 w-full rounded-2xl bg-[var(--color-primary)] px-6 py-3.5 text-sm font-bold text-white shadow-[var(--shadow-gold)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40" disabled={status === "loading"}>
           {status === "loading" ? "جارٍ الإرسال..." : "إرسال الطلب"}
         </button>
-
         {status !== "idle" ? (
-          <div
-            className={`mt-4 rounded-2xl px-4 py-3 text-xs ${
-              status === "success"
-                ? "bg-emerald-50 text-emerald-700"
-                : status === "error"
-                  ? "bg-rose-50 text-rose-700"
-                  : "bg-slate-50 text-slate-600"
-            }`}
-          >
+          <div className={`mt-4 rounded-2xl px-4 py-3 text-xs ${status === "success" ? "border border-emerald-300 bg-emerald-50 text-emerald-700" : status === "error" ? "border border-red-300 bg-red-50 text-red-700" : "border border-[var(--color-border)] bg-[var(--color-surface-warm)] text-[var(--color-muted)]"}`}>
             {statusMessage}
           </div>
         ) : null}
@@ -354,61 +167,35 @@ export default function CheckoutPage() {
 
       <aside className="space-y-6">
         <div className="rounded-3xl border border-[var(--color-border)] bg-white p-8 shadow-[var(--shadow-soft)]">
-          <h2 className="text-xl font-semibold text-slate-900">ملخص السلة</h2>
+          <h2 className="text-xl font-bold text-[var(--color-foreground)]" style={{ fontFamily: "var(--font-tajawal)" }}>ملخص السلة</h2>
           <div className="mt-6 space-y-4">
-            {cartItems.length ? (
-              cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-3 text-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-slate-100">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900">{item.name}</p>
-                      <p className="text-xs text-[var(--color-muted)]">
-                        {item.quantity} × {formatCurrency(item.price)}
-                      </p>
-                    </div>
+            {cartItems.length ? cartItems.map((item) => (
+              <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-12 w-12 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)]">
+                    <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                   </div>
-                  <p className="font-semibold text-slate-900">
-                    {formatCurrency(item.subtotal)}
-                  </p>
+                  <div>
+                    <p className="font-medium text-[var(--color-foreground)]">{item.name}</p>
+                    <p className="text-xs text-[var(--color-muted)]">{item.quantity} × {formatCurrency(item.price)}</p>
+                  </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-[var(--color-muted)]">
-                لم تتم إضافة منتجات بعد.
-              </p>
-            )}
+                <p className="font-semibold text-[var(--color-primary)]">{formatCurrency(item.subtotal)}</p>
+              </div>
+            )) : <p className="text-sm text-[var(--color-muted)]">لم تتم إضافة منتجات بعد.</p>}
           </div>
           <div className="mt-6 space-y-2 border-t border-[var(--color-border)] pt-4 text-sm text-[var(--color-muted)]">
-            <div className="flex items-center justify-between">
-              <span>المجموع الفرعي</span>
-              <span>{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>رسوم التوصيل</span>
-              <span>{formatCurrency(deliveryFee)}</span>
-            </div>
-            <div className="flex items-center justify-between text-base font-semibold text-slate-900">
+            <div className="flex items-center justify-between"><span>المجموع الفرعي</span><span>{formatCurrency(subtotal)}</span></div>
+            <div className="flex items-center justify-between"><span>رسوم التوصيل</span><span>{deliveryFee > 0 ? formatCurrency(deliveryFee) : "مجاني"}</span></div>
+            <div className="flex items-center justify-between text-base font-bold text-[var(--color-foreground)]">
               <span>الإجمالي</span>
-              <span>{formatCurrency(total)}</span>
+              <span className="text-[var(--color-primary)]">{formatCurrency(total)}</span>
             </div>
           </div>
         </div>
-
-        <div className="rounded-3xl bg-[var(--color-primary)] p-6 text-white shadow-[var(--shadow-soft)]">
-          <h3 className="text-lg font-semibold">ملاحظة التوصيل</h3>
-          <p className="mt-2 text-xs text-white/70">
-            التوصيل داخل العراق خلال 24-48 ساعة حسب المدينة.
-          </p>
+        <div className="rounded-3xl border border-[var(--color-primary)]/25 bg-[var(--color-gold-soft)] p-6">
+          <h3 className="text-lg font-semibold text-[var(--color-primary)]" style={{ fontFamily: "var(--font-tajawal)" }}>ملاحظة التوصيل</h3>
+          <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">نوصّل لمعظم المحافظات السورية — مدة التوصيل تُحدَّد عند تأكيد الطلب عبر الهاتف.</p>
         </div>
       </aside>
     </div>

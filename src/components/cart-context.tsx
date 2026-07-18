@@ -19,7 +19,7 @@ type CartContextValue = {
   clear: () => void;
 };
 
-const STORAGE_KEY = "kasco-cart-v1";
+const STORAGE_KEY = "talin-cart-v1";
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const safeParse = (value: string | null): CartState => {

@@ -1,15 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --color-primary: #dc2626;
-  --color-primary-600: #b91c1c;
-  --color-accent: #dc2626;
+  --background: #faf8f5;
+  --foreground: #1a1a1a;
+  --color-primary: #b8860b;
+  --color-primary-light: #d4a843;
+  --color-primary-600: #9a7209;
+  --color-accent: #b8860b;
   --color-surface: #ffffff;
-  --color-muted: #6b7280;
-  --color-border: #e5e7eb;
-  --shadow-soft: 0 24px 60px -48px rgba(220, 38, 38, 0.25);
+  --color-surface-elevated: #ffffff;
+  --color-surface-warm: #f5f0e8;
+  --color-muted: #6b6b6b;
+  --color-muted-dim: #999999;
+  --color-border: #e8e2d8;
+  --color-border-strong: #d4cfc5;
+  --color-gold-soft: rgba(184, 134, 11, 0.08);
+  --color-cream: #f5f0e8;
+  --shadow-soft: 0 4px 24px -4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 32px -8px rgba(0, 0, 0, 0.1);
+  --shadow-gold: 0 4px 20px -4px rgba(184, 134, 11, 0.2);
+  --focus-ring: rgba(184, 134, 11, 0.3);
 }
 
 @theme inline {
@@ -19,20 +29,42 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: #ffffff;
-  color: #000000;
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-cairo), Arial, Helvetica, sans-serif;
   direction: rtl;
 }
 
+.font-display {
+  font-family: var(--font-tajawal), var(--font-cairo), sans-serif;
+}
+
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(184, 134, 11, 0.2);
+  color: #1a1a1a;
+}
+
+@keyframes problemExit {
+  0% { opacity: 1; transform: scale(1) translateX(0); }
+  100% { opacity: 0; transform: scale(0.95) translateX(-30px); }
+}
+
+@keyframes problemEnter {
+  0% { opacity: 0; transform: scale(0.95) translateX(30px); }
+  100% { opacity: 1; transform: scale(1) translateX(0); }
+}
+
+@keyframes textExit {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-12px); }
+}
+
+@keyframes textEnter {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
 }

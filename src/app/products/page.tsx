@@ -12,107 +12,59 @@ export default function ProductsPage() {
   const { addItem } = useCart();
   const router = useRouter();
   const { products, loading } = useProducts();
-  const categories = Array.from(new Set(products.map((p) => p.category)));
-  const handleBuyNow = (product: {
-    id: string;
-    name: string;
-    price: number;
-    category?: string;
-  }) => {
+
+  const handleBuyNow = (product: { id: string; name: string; price: number; category?: string }) => {
     addItem(product.id);
-    trackAddToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      category: product.category,
-      quantity: 1,
-    });
+    trackAddToCart({ id: product.id, name: product.name, price: product.price, category: product.category, quantity: 1 });
     router.push("/checkout");
   };
 
   return (
     <div className="space-y-10">
-      <section className="space-y-4">
-        <p className="text-sm text-[var(--color-muted)]">منتجات متنوعة</p>
-        <h1 className="text-3xl font-bold text-slate-900">كل المنتجات</h1>
-        <div className="flex flex-wrap gap-3 text-xs text-[var(--color-muted)]">
-          {categories.map((category) => (
-            <span
-              key={category}
-              className="rounded-full border border-[var(--color-border)] px-3 py-1"
-            >
-              {category}
-            </span>
-          ))}
-        </div>
+      <section className="space-y-4 text-center lg:text-right">
+        <p className="text-sm font-medium text-[var(--color-primary)]">Talin Beauty · تالين بيوتي</p>
+        <h1 className="text-3xl font-bold text-[var(--color-foreground)] lg:text-4xl" style={{ fontFamily: "var(--font-tajawal)" }}>
+          زيت نمو الشعر الفاخر
+        </h1>
+        <p className="mx-auto max-w-2xl text-sm leading-7 text-[var(--color-muted)] lg:mx-0">
+          منتج واحد بتركيبة مدروسة — لفروة رأسك وشعرك الذي تستحقينه.
+        </p>
       </section>
 
       <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {loading
-          ? [0, 1, 2, 3, 4, 5].map((item) => (
-              <div
-                key={item}
-                className="rounded-3xl border border-[var(--color-border)] bg-white p-6 shadow-[var(--shadow-soft)]"
-              >
-                <div className="h-32 rounded-2xl bg-slate-100" />
-                <div className="mt-4 space-y-2">
-                  <div className="h-4 w-32 rounded-full bg-slate-100" />
-                  <div className="h-3 w-44 rounded-full bg-slate-100" />
-                </div>
-              </div>
-            ))
-          : products.map((product) => (
-          <div
-            key={product.id}
-            className="flex flex-col justify-between rounded-3xl border border-[var(--color-border)] bg-white p-6 shadow-[var(--shadow-soft)] transition hover:-translate-y-1"
-          >
+        {loading ? [0, 1, 2].map((item) => (
+          <div key={item} className="rounded-3xl border border-[var(--color-border)] bg-white p-6">
+            <div className="h-40 rounded-2xl bg-[var(--color-surface-warm)]" />
+            <div className="mt-4 space-y-2">
+              <div className="h-4 w-32 rounded-full bg-[var(--color-surface-warm)]" />
+              <div className="h-3 w-44 rounded-full bg-[var(--color-surface-warm)]" />
+            </div>
+          </div>
+        )) : products.map((product) => (
+          <div key={product.id} className="flex flex-col justify-between rounded-3xl border border-[var(--color-border)] bg-white p-6 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:border-[var(--color-primary)]/25 hover:shadow-[var(--shadow-gold)]">
             <div className="space-y-3">
               {product.badge ? (
-                <span className="inline-flex rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs text-white">
-                  {product.badge}
-                </span>
+                <span className="inline-flex rounded-full border border-[var(--color-primary)]/35 bg-[var(--color-gold-soft)] px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">{product.badge}</span>
               ) : null}
-              <div className="relative h-32 overflow-hidden rounded-2xl bg-slate-100">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative h-48 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)]">
+                <Image src={product.image} alt={`Talin Beauty — ${product.name}`} fill className="object-contain" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {product.name}
-                </h3>
-                <p className="text-sm leading-6 text-[var(--color-muted)]">
-                  {product.description}
-                </p>
+                <h3 className="text-lg font-semibold text-[var(--color-foreground)]" style={{ fontFamily: "var(--font-tajawal)" }}>{product.name}</h3>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)] line-clamp-3">{product.description}</p>
               </div>
             </div>
-            <div className="mt-6 flex items-center justify-between">
-              <p className="text-base font-semibold text-slate-900">
-                {formatCurrency(product.price)}
-              </p>
-              <Link
-                href={`/products/${product.id}`}
-                className="text-xs font-semibold text-[var(--color-primary)]"
-              >
-                عرض التفاصيل
-              </Link>
+            <div className="mt-6 flex items-center justify-between border-t border-[var(--color-border)] pt-4">
+              <p className="text-lg font-bold tabular-nums text-[var(--color-primary)]" style={{ fontFamily: "var(--font-tajawal)" }}>{formatCurrency(product.price)}</p>
+              <Link href={`/products/${product.id}`} className="text-xs font-semibold text-[var(--color-primary)] underline-offset-2 hover:underline">عرض التفاصيل</Link>
             </div>
-            <button
-              type="button"
-              onClick={() => handleBuyNow(product)}
-              className="mt-4 w-full rounded-2xl bg-[var(--color-primary)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-600)]"
-            >
-              اشتري الآن
+            <button type="button" onClick={() => handleBuyNow(product)} className="mt-4 w-full rounded-2xl bg-[var(--color-primary)] py-3 text-sm font-bold text-white transition hover:brightness-110">
+              اطلبي الآن - الدفع عند الاستلام
             </button>
           </div>
         ))}
         {!loading && products.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-muted)]">
-            لا توجد منتجات حالياً.
-          </div>
+          <div className="rounded-3xl border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-muted)]">لا توجد منتجات حالياً.</div>
         ) : null}
       </section>
     </div>

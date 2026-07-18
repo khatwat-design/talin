@@ -1,17 +1,22 @@
 /**
- * طبقة موحدة للأحداث: إطلاق نفس الحدث على Meta Pixel و TikTok Pixel معاً
- *
- * خريطة الأحداث:
- * - PageView        → layout (تحميل أي صفحة)
- * - ViewContent     → صفحة منتج [id]، صفحات الهبوط (carlinkit-plus-128gb, 64gb, hud-128gb, kaskoair)
- * - AddToCart       → الرئيسية، قائمة المنتجات، صفحة منتج، صفحات الهبوط (عند الضغط اشتري الآن)
- * - InitiateCheckout → صفحة الدفع (عند الدخول)
- * - AddPaymentInfo  → صفحة الدفع (عند عرض نموذج الدفع)
- * - Purchase        → صفحة النجاح /checkout/success (بعد إتمام الطلب)
+ * طبقة أحداث التتبع — توحيد Meta Pixel + TikTok Pixel
  */
 
-import * as meta from "./meta-pixel";
-import * as tiktok from "./tiktok-pixel";
+import {
+  trackAddToCart as metaAddToCart,
+  trackViewContent as metaViewContent,
+  trackInitiateCheckout as metaInitiateCheckout,
+  trackAddPaymentInfo as metaAddPaymentInfo,
+  trackPurchase as metaPurchase,
+} from "./meta-pixel";
+
+import {
+  trackAddToCart as tiktokAddToCart,
+  trackViewContent as tiktokViewContent,
+  trackInitiateCheckout as tiktokInitiateCheckout,
+  trackAddPaymentInfo as tiktokAddPaymentInfo,
+  trackPurchase as tiktokPurchase,
+} from "./tiktok-pixel";
 
 export type PixelItem = {
   id: string;
@@ -28,26 +33,33 @@ export type PixelPayload = {
 };
 
 export const trackAddToCart = (item: PixelItem) => {
-  meta.trackAddToCart(item);
-  tiktok.trackAddToCart(item);
+  metaAddToCart(item);
+  tiktokAddToCart(item);
 };
 
 export const trackViewContent = (item: PixelItem) => {
-  meta.trackViewContent(item);
-  tiktok.trackViewContent(item);
+  metaViewContent(item);
+  tiktokViewContent(item);
 };
 
 export const trackInitiateCheckout = (payload: PixelPayload) => {
-  meta.trackInitiateCheckout(payload);
-  tiktok.trackInitiateCheckout(payload);
+  metaInitiateCheckout(payload);
+  tiktokInitiateCheckout(payload);
 };
 
 export const trackAddPaymentInfo = (payload: PixelPayload) => {
-  meta.trackAddPaymentInfo(payload);
-  tiktok.trackAddPaymentInfo(payload);
+  metaAddPaymentInfo(payload);
+  tiktokAddPaymentInfo(payload);
 };
 
 export const trackPurchase = (payload: PixelPayload) => {
-  meta.trackPurchase(payload);
-  tiktok.trackPurchase(payload);
+  metaPurchase(payload);
+  tiktokPurchase(payload);
+};
+
+export const trackWhatsAppClick = () => {
+  const fbq = typeof window !== "undefined" ? (window as { fbq?: (...args: unknown[]) => void }).fbq : null;
+  if (typeof fbq === "function") {
+    fbq("trackCustom", "WhatsAppClick");
+  }
 };

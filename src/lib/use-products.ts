@@ -27,7 +27,7 @@ export const useProducts = (): ProductsState => {
       }
       const data = (await response.json()) as { products?: Product[] };
       setProducts(data.products ?? []);
-    } catch (err) {
+    } catch {
       setError("تعذر تحميل المنتجات حالياً.");
     } finally {
       setLoading(false);

@@ -1,38 +1,16 @@
 [
   {
-    "id": "carlinkit-plus-64gb",
-    "name": "Carlinkit Plus 64GB",
-    "description": "حوّل شاشة سيارتك لأندرويد كامل بدون تغيير الشاشة.",
-    "price": 155000,
-    "badge": "خيار ذكي",
-    "category": "إلكترونيات السيارات",
-    "image": "/images/Carlinkit%20Plus%2064GB/01.png"
-  },
-  {
-    "id": "kaskoair",
-    "name": "Kaskoair",
-    "description": "ودّع الكيبلات — CarPlay و Android Auto وايرلس.",
-    "price": 55000,
-    "badge": "لاسلكي",
-    "category": "إلكترونيات السيارات",
-    "image": "/images/kasko%20air/01.png"
-  },
-  {
-    "id": "hud-128gb",
-    "name": "HUD 128GB",
-    "description": "أندرويد كامل للسيارة مع تشغيل الشاشات الخلفية.",
-    "price": 245000,
-    "badge": "الحل العائلي",
-    "category": "إلكترونيات السيارات",
-    "image": "/images/Hud128%20GB/01.png"
-  },
-  {
-    "id": "carlinkit-plus-128gb",
-    "name": "Carlinkit Plus 128GB",
-    "description": "أقصى قوة أقصى سلاسة — الأندرويد الكامل داخل سيارتك. مخصص للي يريد أعلى أداء، تخزين أكبر، وتجربة أندرويد بدون أي تنازلات.",
-    "price": 200000,
-    "badge": "الأقوى",
-    "category": "إلكترونيات السيارات",
-    "image": "/images/Carlinket%20Plus%20128GB/01.png"
+    "id": "talin-hair-growth-oil",
+    "name": "زيت تالين بيوتي لتسريع نمو الشعر",
+    "description": "تركيبة فاخرة من زيوت طبيعية مختارة لدعم فروة الرأس، تغذية الجذور، وتقليل التساقط — بملمس خفيف ورائحة أنيقة تناسب الاستخدام اليومي. زجاجة سوداء فاخرة 100 مل مع فيتيامينات D وE ومعادن طبيعية.",
+    "price": 20,
+    "category": "زيوت العناية بالشعر",
+    "image": "/products/talin-hair-oil-01.png",
+    "gallery": [
+      "/products/talin-hair-oil-02.png",
+      "/products/talin-hair-oil-03.png",
+      "/products/talin-hair-oil-04.png",
+      "/products/talin-hair-oil-05.png"
+    ]
   }
 ]

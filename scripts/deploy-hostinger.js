@@ -42,10 +42,16 @@ if (fs.existsSync(publicRoot)) {
   copyDir(publicRoot, path.join(deployRoot, "public"));
 }
 
-const note = `Hostinger deploy bundle
-- Entry point: server.js
-- Run command: node server.js
-- No build step needed (prebuilt)
+const note = `Hostinger — حزمة جاهزة (standalone) / Prebuilt bundle
+================================================
+لا تشغّل "npm run build" على السيرفر — لا يوجد مجلد src/app هنا.
+Do NOT run "npm run build" on the server — there is no src/app folder.
+
+تشغيل / Run:
+  node server.js
+
+أو في لوحة Hostinger: Start command = node server.js ، Build = فارغ
+See HOSTINGER.md in the full project repo for the source zip option.
 `;
 
 fs.writeFileSync(path.join(deployRoot, "DEPLOY.txt"), note);

@@ -16,9 +16,11 @@ const getFbq = () => {
   if (typeof window === "undefined") {
     return null;
   }
-  const fbq = (window as { fbq?: (...args: any[]) => void }).fbq;
+  const fbq = (window as { fbq?: (...args: unknown[]) => void }).fbq;
   return typeof fbq === "function" ? fbq : null;
 };
+
+const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY?.trim() || "USD";
 
 const normalizeContents = (items: PixelItem[]) =>
   items.map((item) => ({
@@ -29,9 +31,7 @@ const normalizeContents = (items: PixelItem[]) =>
 
 export const trackAddToCart = (item: PixelItem) => {
   const fbq = getFbq();
-  if (!fbq) {
-    return;
-  }
+  if (!fbq) return;
   const quantity = item.quantity ?? 1;
   const value = (item.price ?? 0) * quantity;
   fbq("track", "AddToCart", {
@@ -40,16 +40,14 @@ export const trackAddToCart = (item: PixelItem) => {
     content_type: "product",
     ...(item.category && { content_category: item.category }),
     value,
-    currency: "IQD",
+    currency,
     contents: normalizeContents([{ ...item, quantity }]),
   });
 };
 
 export const trackInitiateCheckout = (payload: PixelPayload) => {
   const fbq = getFbq();
-  if (!fbq) {
-    return;
-  }
+  if (!fbq) return;
   const totalItems = payload.items.reduce(
     (sum, item) => sum + (item.quantity ?? 1),
     0,
@@ -58,7 +56,7 @@ export const trackInitiateCheckout = (payload: PixelPayload) => {
     content_ids: payload.items.map((item) => item.id),
     content_type: "product",
     value: payload.total ?? 0,
-    currency: "IQD",
+    currency,
     num_items: totalItems,
     contents: normalizeContents(payload.items),
   });
@@ -66,25 +64,20 @@ export const trackInitiateCheckout = (payload: PixelPayload) => {
 
 export const trackPurchase = (payload: PixelPayload) => {
   const fbq = getFbq();
-  if (!fbq) {
-    return;
-  }
+  if (!fbq) return;
   fbq("track", "Purchase", {
     content_ids: payload.items.map((item) => item.id),
     content_type: "product",
     value: payload.total ?? 0,
-    currency: "IQD",
+    currency,
     contents: normalizeContents(payload.items),
     order_id: payload.orderId,
   });
 };
 
-/** عرض محتوى منتج (صفحة منتج أو تفاصيل) */
 export const trackViewContent = (item: PixelItem) => {
   const fbq = getFbq();
-  if (!fbq) {
-    return;
-  }
+  if (!fbq) return;
   const quantity = item.quantity ?? 1;
   const value = (item.price ?? 0) * quantity;
   fbq("track", "ViewContent", {
@@ -93,22 +86,19 @@ export const trackViewContent = (item: PixelItem) => {
     content_type: "product",
     ...(item.category && { content_category: item.category }),
     value,
-    currency: "IQD",
+    currency,
     contents: normalizeContents([{ ...item, quantity }]),
   });
 };
 
-/** بدء إدخال بيانات الدفع (صفحة الدفع) */
 export const trackAddPaymentInfo = (payload: PixelPayload) => {
   const fbq = getFbq();
-  if (!fbq) {
-    return;
-  }
+  if (!fbq) return;
   fbq("track", "AddPaymentInfo", {
     content_ids: payload.items.map((item) => item.id),
     content_type: "product",
     value: payload.total ?? 0,
-    currency: "IQD",
+    currency,
     contents: normalizeContents(payload.items),
   });
 };
