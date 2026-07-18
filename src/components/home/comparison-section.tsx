@@ -33,7 +33,7 @@ export default function ComparisonSection() {
 
           {/* Rows */}
           <div className="space-y-2">
-            {rows.map((row, i) => (
+            {rows.map((row) => (
               <div
                 key={row.label}
                 className="grid grid-cols-[1fr_140px_100px] items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-white px-0 py-0 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] transition-all duration-300 hover:border-[var(--color-primary)]/20 hover:shadow-[0_4px_20px_-4px_rgba(184,134,11,0.12)] sm:grid-cols-[1fr_180px_120px] sm:gap-4"
