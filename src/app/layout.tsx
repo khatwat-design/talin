@@ -1,25 +1,33 @@
 import type { Metadata } from "next";
-import { Cairo, Geist_Mono, Tajawal } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import { CartProvider } from "@/components/cart-context";
 import AppShell from "@/components/app-shell";
 
-const cairo = Cairo({
+const cairo = localFont({
   variable: "--font-cairo",
-  subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  src: "./fonts/cairo.woff2",
+  weight: "100 900",
+  display: "swap",
 });
 
-const tajawal = Tajawal({
+const tajawal = localFont({
   variable: "--font-tajawal",
-  subsets: ["arabic"],
-  weight: ["400", "500", "700", "800"],
+  src: [
+    { path: "./fonts/tajawal-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/tajawal-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/tajawal-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/tajawal-800.woff2", weight: "800", style: "normal" },
+  ],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  src: "./fonts/geist.woff",
+  weight: "400",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
