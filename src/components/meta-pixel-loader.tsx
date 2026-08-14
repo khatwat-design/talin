@@ -1,7 +1,8 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 declare global {
   interface Window {
@@ -13,9 +14,13 @@ declare global {
  * Loads Meta Pixel using runtime config from /api/config.
  * This way NEXT_PUBLIC_META_PIXEL_ID set on the server (e.g. Hostinger) works
  * without needing to rebuild the app.
+ *
+ * Fires PageView on initial load and on every client-side route change.
  */
 export default function MetaPixelLoader() {
   const [pixelId, setPixelId] = useState<string | null>(null);
+  const pathname = usePathname();
+  const isFirstPageView = useRef(true);
 
   useEffect(() => {
     fetch("/api/config")
@@ -32,6 +37,21 @@ export default function MetaPixelLoader() {
     window.fbq("init", pixelId);
     window.fbq("track", "PageView");
   };
+
+  // Fire PageView on every route change once the SDK is loaded.
+  // Skip the very first run because handleLoad already fired PageView.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.fbq) return;
+    if (isFirstPageView.current) {
+      isFirstPageView.current = false;
+      return;
+    }
+    const fbq = window.fbq;
+    const timer = setTimeout(() => {
+      fbq("track", "PageView");
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [pathname, pixelId]);
 
   if (!pixelId) return null;
 

@@ -8,6 +8,7 @@ import {
   trackInitiateCheckout as metaInitiateCheckout,
   trackAddPaymentInfo as metaAddPaymentInfo,
   trackPurchase as metaPurchase,
+  trackViewCart as metaViewCart,
 } from "./meta-pixel";
 
 import {
@@ -16,6 +17,7 @@ import {
   trackInitiateCheckout as tiktokInitiateCheckout,
   trackAddPaymentInfo as tiktokAddPaymentInfo,
   trackPurchase as tiktokPurchase,
+  trackViewCart as tiktokViewCart,
 } from "./tiktok-pixel";
 
 export type PixelItem = {
@@ -55,6 +57,11 @@ export const trackAddPaymentInfo = (payload: PixelPayload) => {
 export const trackPurchase = (payload: PixelPayload) => {
   metaPurchase(payload);
   tiktokPurchase(payload);
+};
+
+export const trackViewCart = (payload: PixelPayload) => {
+  metaViewCart(payload);
+  tiktokViewCart(payload);
 };
 
 export const trackWhatsAppClick = () => {

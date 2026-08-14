@@ -45,6 +45,23 @@ export const trackAddToCart = (item: PixelItem) => {
   });
 };
 
+export const trackViewCart = (payload: PixelPayload) => {
+  const fbq = getFbq();
+  if (!fbq) return;
+  const totalItems = payload.items.reduce(
+    (sum, item) => sum + (item.quantity ?? 1),
+    0,
+  );
+  fbq("trackCustom", "ViewCart", {
+    content_ids: payload.items.map((item) => item.id),
+    content_type: "product",
+    value: payload.total ?? 0,
+    currency,
+    num_items: totalItems,
+    contents: normalizeContents(payload.items),
+  });
+};
+
 export const trackInitiateCheckout = (payload: PixelPayload) => {
   const fbq = getFbq();
   if (!fbq) return;

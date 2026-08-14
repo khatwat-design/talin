@@ -53,18 +53,11 @@ export default function CheckoutPage() {
   const total = subtotal + deliveryFee;
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const firedCheckoutEvent = useRef(false);
-  const firedPaymentInfoEvent = useRef(false);
 
   useEffect(() => {
     if (!cartItems.length || firedCheckoutEvent.current) return;
     trackInitiateCheckout({ items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })), total });
     firedCheckoutEvent.current = true;
-  }, [cartItems, total]);
-
-  useEffect(() => {
-    if (!cartItems.length || firedPaymentInfoEvent.current) return;
-    trackAddPaymentInfo({ items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })), total });
-    firedPaymentInfoEvent.current = true;
   }, [cartItems, total]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,6 +83,10 @@ export default function CheckoutPage() {
     if (!selectedCity || shippingCost === null) { setStatus("error"); setStatusMessage("يرجى اختيار المحافظة."); return; }
 
     setStatus("loading"); setStatusMessage("جارٍ إرسال الطلب...");
+    trackAddPaymentInfo({
+      items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })),
+      total: subtotal + shippingCost,
+    });
     const orderPayload = {
       customer: { name: String(form.get("name") || ""), phone, city: selectedCity, address: String(form.get("address") || ""), notes: String(form.get("notes") || ""), paymentMethod: "cod" },
       items: cartItems.map((item) => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity, subtotal: item.subtotal })),

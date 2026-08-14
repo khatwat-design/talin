@@ -1,3 +1,5 @@
+import { trackWhatsAppClick } from "@/lib/pixels";
+
 const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+963980906364";
 const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://www.instagram.com/shmasglowoff";
 
@@ -14,6 +16,7 @@ export default function ContactSection() {
               href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={trackWhatsAppClick}
               className="group flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)] p-5 transition hover:border-[#25D366] hover:shadow-md sm:p-6"
             >
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366] transition group-hover:scale-110">

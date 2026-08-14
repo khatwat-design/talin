@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -36,12 +37,19 @@ const safeParse = (value: string | null): CartState => {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartState>({});
+  const hydrated = useRef(false);
 
   useEffect(() => {
     setItems(safeParse(window.localStorage.getItem(STORAGE_KEY)));
   }, []);
 
+  // Only write back to localStorage after hydration so we don't clobber the
+  // saved cart with the initial empty state on first mount.
   useEffect(() => {
+    if (!hydrated.current) {
+      hydrated.current = true;
+      return;
+    }
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 

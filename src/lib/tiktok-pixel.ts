@@ -46,6 +46,21 @@ export const trackAddToCart = (item: PixelItem) => {
   });
 };
 
+export const trackViewCart = (payload: PixelPayload) => {
+  const ttq = getTtq();
+  if (!ttq) return;
+  ttq.track("ViewContent", {
+    content_type: "product",
+    value: payload.total ?? 0,
+    currency,
+    contents: payload.items.map((i) => ({
+      content_id: i.id,
+      quantity: i.quantity ?? 1,
+      content_price: i.price ?? 0,
+    })),
+  });
+};
+
 export const trackInitiateCheckout = (payload: PixelPayload) => {
   const ttq = getTtq();
   if (!ttq) return;

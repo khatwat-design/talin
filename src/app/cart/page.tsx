@@ -6,6 +6,7 @@ import { useEffect, useState, useMemo } from "react";
 import { formatCurrency } from "@/lib/products";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/components/cart-context";
+import { trackViewCart } from "@/lib/pixels";
 
 export default function CartPage() {
   const { items, addItem, removeItem, setItem } = useCart();
@@ -31,6 +32,29 @@ export default function CartPage() {
   );
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
+
+  // Track cart view once items are loaded
+  useEffect(() => {
+    if (!cartItems.length) return;
+    trackViewCart({
+      items: cartItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      total: subtotal,
+    });
+  }, [cartItems, subtotal]);
+
+  const handleQuantityChange = (id: string, raw: string) => {
+    if (raw === "") {
+      return;
+    }
+    const value = Number(raw);
+    if (Number.isNaN(value)) return;
+    setItem(id, Math.max(1, Math.floor(value)));
+  };
 
   return (
     <div className="py-4 md:py-8">
@@ -88,11 +112,7 @@ export default function CartPage() {
                         type="number"
                         min={1}
                         value={item.quantity}
-                        onChange={(event) => {
-                          const value = Number(event.target.value);
-                          if (Number.isNaN(value)) return;
-                          setItem(item.id, Math.max(1, value));
-                        }}
+                        onChange={(event) => handleQuantityChange(item.id, event.target.value)}
                         className="w-16 rounded-xl border border-[var(--color-border)] bg-white px-2 py-2 text-center text-sm text-[var(--color-foreground)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--focus-ring)]"
                       />
                       <button
@@ -101,6 +121,16 @@ export default function CartPage() {
                         className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-primary)] text-sm font-bold text-white transition hover:brightness-110"
                       >
                         +
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setItem(item.id, 0)}
+                        className="ms-1 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-white text-[var(--color-muted)] transition hover:border-red-400 hover:text-red-500"
+                        aria-label="حذف المنتج"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2" />
+                        </svg>
                       </button>
                     </div>
                     <div className="text-right sm:min-w-[100px]">
