@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 declare global {
@@ -12,28 +12,32 @@ declare global {
 
 const DEFAULT_PIXEL_ID = "771518579044462";
 
+function firePageView() {
+  const fbq = typeof window !== "undefined" ? window.fbq : null;
+  if (typeof fbq !== "function") return;
+  fbq("track", "PageView");
+}
+
 /**
- * يتولى إرسال PageView عند كل تنقّل داخلي (SPA) دون إعادة تهيئة.
- * كود التهيئة الرسمي (init + PageView الأول) يُحقن في <head>
- * من layout.tsx حتى يلتقطه Meta Pixel Helper من أول تحميل.
+ * يُرسل PageView عند كل تحميل وعند كل تنقّل داخلي (SPA).
+ * كود التهيئة (init) محقون في <head> من layout.tsx حتى يراه
+ * Meta Pixel Helper من أول تحميل، والـ PageView يُرسل من هنا
+ * بانتظار ثانية ليتأكد الـ Helper أنه ملتقِط الأحداث.
  */
 export default function MetaPixelLoader() {
-  const pixelId =
-    process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || DEFAULT_PIXEL_ID;
   const pathname = usePathname();
-  const isFirstPageView = useRef(true);
 
-  // PageView عند كل تنقّل — أول تحميل يُحسب من كود <head>.
   useEffect(() => {
-    const fbq = typeof window !== "undefined" ? window.fbq : null;
-    if (!fbq) return;
-    if (isFirstPageView.current) {
-      isFirstPageView.current = false;
-      return;
-    }
-    const timer = setTimeout(() => fbq("track", "PageView"), 0);
+    // تأخير قصير حتى يكتمل تحميل fbevents.js فيلتقط الـ Helper الحدث.
+    const timer = setTimeout(firePageView, 1000);
     return () => clearTimeout(timer);
-  }, [pathname, pixelId]);
+  }, [pathname]);
+
+  // إعادة المحاولة إن تأخر تحميل السكربت.
+  useEffect(() => {
+    const retryTimer = setTimeout(firePageView, 3000);
+    return () => clearTimeout(retryTimer);
+  }, [pathname]);
 
   return null;
 }
