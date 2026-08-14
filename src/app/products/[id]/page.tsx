@@ -4,7 +4,6 @@ import { useEffect, useRef, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { formatCurrency } from "@/lib/products";
 import { useCart } from "@/components/cart-context";
 import { useProducts } from "@/lib/use-products";
 import { trackAddToCart, trackViewContent, trackWhatsAppClick } from "@/lib/pixels";
@@ -16,7 +15,7 @@ const whatsappLink = whatsappNumber
   : "#";
 
 export default function ProductDetailPage() {
-  const { addItem } = useCart();
+  const { setItem } = useCart();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { products, loading } = useProducts();
@@ -30,6 +29,15 @@ export default function ProductDetailPage() {
   }, [product]);
 
   const [activeImage, setActiveImage] = useState(0);
+  const [selectedQty, setSelectedQty] = useState(1);
+
+  const bundles = product?.bundles?.length
+    ? product.bundles
+    : [
+        { quantity: 1, price: product?.price ?? 20, label: "قطعة ١" },
+        { quantity: 2, price: 36, label: "قطعتان" },
+        { quantity: 3, price: 52, label: "٣ قطع" },
+      ];
 
   useEffect(() => {
     setActiveImage(0);
@@ -63,13 +71,14 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     if (!product) return;
-    addItem(product.id);
+    const bundle = bundles.find((b) => b.quantity === selectedQty);
+    setItem(product.id, selectedQty);
     trackAddToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       category: product.category,
-      quantity: 1,
+      quantity: selectedQty,
     });
     router.push("/checkout");
   };
@@ -140,11 +149,25 @@ export default function ProductDetailPage() {
               </p>
               <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)] p-4">
                 <p className="text-xs uppercase tracking-wider text-[var(--color-muted-dim)]">
-                  السعر
+                  اختر الكمية (أسعار الباقات)
                 </p>
-                <p className="mt-1 text-3xl font-bold tabular-nums text-[var(--color-primary)]" style={{ fontFamily: "var(--font-tajawal)" }}>
-                  {product ? formatCurrency(product.price) : "--"}
-                </p>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {bundles.map((b) => (
+                    <button
+                      key={b.quantity}
+                      type="button"
+                      onClick={() => setSelectedQty(b.quantity)}
+                      className={`flex flex-col items-center rounded-xl border px-2 py-3 transition ${
+                        selectedQty === b.quantity
+                          ? "border-[var(--color-primary)] bg-white ring-2 ring-[var(--color-primary)]/30"
+                          : "border-[var(--color-border)] bg-white opacity-80 hover:opacity-100"
+                      }`}
+                    >
+                      <span className="text-xs font-semibold text-[var(--color-foreground)]">{b.label}</span>
+                      <span className="mt-1 text-base font-bold text-[var(--color-primary)]">${b.price}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
               <button
                 type="button"

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { addOrderToGoogleSheets } from "@/lib/google-sheets";
 import { getShippingFeeForCity } from "@/lib/shipping-syria";
+import { getProductsFromJson } from "@/lib/products-data";
+import { getBundleSubtotal } from "@/lib/products";
 
 export const runtime = "nodejs";
 
@@ -145,7 +147,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const subtotal = payload.summary.subtotal;
+    const subtotal = getProductsFromJson().reduce((sum, product) => {
+      const item = payload.items.find((i) => i.id === product.id);
+      return item ? sum + getBundleSubtotal(product, item.quantity) : sum;
+    }, 0);
     const deliveryFee = shippingFee;
     const total = subtotal + deliveryFee;
 

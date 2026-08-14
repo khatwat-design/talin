@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart-context";
 import { useProducts } from "@/lib/use-products";
 import { trackAddToCart } from "@/lib/pixels";
-import { FaqStructuredData, OrganizationStructuredData } from "@/components/structured-data";
-import HeroSection from "@/components/home/hero-section";
+import { FaqStructuredData, OrganizationStructuredData } from "@/components/structured-data";import HeroSection from "@/components/home/hero-section";
 import ProblemsSection from "@/components/home/problems-section";
 import BenefitsSection from "@/components/home/benefits-section";
 import IngredientsSection from "@/components/home/ingredients-section";
@@ -21,7 +20,7 @@ import FaqSection from "@/components/home/faq-section";
 import ContactSection from "@/components/home/contact-section";
 
 export default function Home() {
-  const { addItem } = useCart();
+  const { setItem } = useCart();
   const router = useRouter();
   const { products } = useProducts();
 
@@ -32,14 +31,14 @@ export default function Home() {
     name: string;
     price: number;
     category?: string;
-  }) => {
-    addItem(product.id);
+  }, quantity = 1) => {
+    setItem(product.id, quantity);
     trackAddToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       category: product.category,
-      quantity: 1,
+      quantity,
     });
     router.push("/checkout");
   };
@@ -94,20 +93,24 @@ export default function Home() {
                     {heroProduct.description}
                   </p>
                   <div className="mt-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)] p-5">
-                    <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-dim)]">الأسعار</p>
-                    <div className="mt-3 space-y-1.5">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-sm font-semibold text-[var(--color-foreground)]">قطعة ١</span>
-                        <span className="text-lg font-bold text-[var(--color-primary)]">$20</span>
-                      </div>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-sm font-semibold text-[var(--color-foreground)]">قطعتان</span>
-                        <span className="text-lg font-bold text-[var(--color-primary)]">$36</span>
-                      </div>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-sm font-semibold text-[var(--color-foreground)]">٣ قطع</span>
-                        <span className="text-lg font-bold text-[var(--color-primary)]">$52</span>
-                      </div>
+                    <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-dim)]">اختر الباقة</p>
+                    <div className="mt-3 space-y-2">
+                      {(heroProduct.bundles?.length ? heroProduct.bundles : [{ quantity: 1, price: 20, label: "قطعة ١" }, { quantity: 2, price: 36, label: "قطعتان" }, { quantity: 3, price: 52, label: "٣ قطع" }]).map((b) => (
+                        <button
+                          key={b.quantity}
+                          type="button"
+                          onClick={() => handleBuyNow(heroProduct, b.quantity)}
+                          className="group flex w-full items-center justify-between rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 transition hover:border-[var(--color-primary)] hover:shadow-[var(--shadow-soft)]"
+                        >
+                          <span className="text-sm font-semibold text-[var(--color-foreground)]">{b.label}</span>
+                          <span className="flex items-center gap-2">
+                            <span className="text-base font-bold text-[var(--color-primary)]">${b.price}</span>
+                            <svg viewBox="0 0 24 24" className="h-4 w-4 text-[var(--color-muted-dim)] transition group-hover:text-[var(--color-primary)]" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                            </svg>
+                          </span>
+                        </button>
+                      ))}
                     </div>
                     <p className="mt-3 text-[11px] font-semibold text-emerald-600">توصيل مجاني — الدفع عند الاستلام</p>
                   </div>

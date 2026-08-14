@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
-import { formatCurrency } from "@/lib/products";
+import { formatCurrency, getBundleSubtotal } from "@/lib/products";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/components/cart-context";
 import { trackViewCart } from "@/lib/pixels";
@@ -26,7 +26,7 @@ export default function CartPage() {
         .map((product) => ({
           ...product,
           quantity: items[product.id],
-          subtotal: items[product.id] * product.price,
+          subtotal: getBundleSubtotal(product, items[product.id]),
         })),
     [products, items],
   );
@@ -96,7 +96,12 @@ export default function CartPage() {
                           {item.description}
                         </p>
                         <p className="mt-2 text-sm font-bold text-[var(--color-primary)]">
-                          {formatCurrency(item.price)}
+                          {formatCurrency(getBundleSubtotal(item, 1))}
+                          {item.quantity > 1 && item.bundles?.length ? (
+                            <span className="ms-2 text-xs font-normal text-emerald-600">
+                              سعر الباقة {formatCurrency(item.subtotal)}
+                            </span>
+                          ) : null}
                         </p>
                       </div>
                     </div>

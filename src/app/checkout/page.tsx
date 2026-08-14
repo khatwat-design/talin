@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatCurrency } from "@/lib/products";
+import { formatCurrency, getBundleSubtotal } from "@/lib/products";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/components/cart-context";
 import { trackInitiateCheckout, trackAddPaymentInfo } from "@/lib/pixels";
@@ -43,7 +43,7 @@ export default function CheckoutPage() {
 
   const cartItems = useMemo(
     () => products.filter((product) => items[product.id]).map((product) => ({
-      ...product, quantity: items[product.id], subtotal: items[product.id] * product.price,
+      ...product, quantity: items[product.id], subtotal: getBundleSubtotal(product, items[product.id]),
     })),
     [items, products],
   );
@@ -174,7 +174,7 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <p className="font-medium text-[var(--color-foreground)]">{item.name}</p>
-                    <p className="text-xs text-[var(--color-muted)]">{item.quantity} × {formatCurrency(item.price)}</p>
+                    <p className="text-xs text-[var(--color-muted)]">{item.quantity} × {formatCurrency(getBundleSubtotal(item, 1))}</p>
                   </div>
                 </div>
                 <p className="font-semibold text-[var(--color-primary)]">{formatCurrency(item.subtotal)}</p>
