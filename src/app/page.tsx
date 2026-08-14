@@ -16,6 +16,7 @@ import WhoIsItForSection from "@/components/home/who-is-it-for-section";
 import ComparisonSection from "@/components/home/comparison-section";
 import OrderCtaSection from "@/components/home/order-cta-section";
 import ReviewsSection from "@/components/home/reviews-section";
+import VideoSection from "@/components/home/video-section";
 import FaqSection from "@/components/home/faq-section";
 import ContactSection from "@/components/home/contact-section";
 
@@ -134,6 +135,9 @@ export default function Home() {
 
       {/* Dark */}
       <OrderCtaSection />
+
+      {/* Video promo — after benefits, before reviews */}
+      <VideoSection />
 
       {/* Light */}
       <ReviewsSection />
