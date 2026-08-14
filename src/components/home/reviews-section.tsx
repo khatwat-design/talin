@@ -76,7 +76,7 @@ export default function ReviewsSection() {
 
         {/* Animated review carousel */}
         <div
-          className="mx-auto mt-12 max-w-md"
+          className="mx-auto mt-12 max-w-3xl"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
@@ -88,15 +88,15 @@ export default function ReviewsSection() {
               {reviewImages.map((src, i) => (
                 <div
                   key={src}
-                  className="relative aspect-[3/4] w-full shrink-0"
+                  className="relative aspect-[3/2] w-full shrink-0"
                   aria-hidden={i !== index}
                 >
                   <Image
                     src={src}
                     alt={`رأي عميلة تالين بيوتي ${i + 1}`}
                     fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 90vw, 28rem"
+                    className="object-contain bg-[#0f0f0f]"
+                    sizes="(max-width: 640px) 90vw, 48rem"
                     priority={i === 0}
                   />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent" />
