@@ -71,7 +71,6 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     if (!product) return;
-    const bundle = bundles.find((b) => b.quantity === selectedQty);
     setItem(product.id, selectedQty);
     trackAddToCart({
       id: product.id,
