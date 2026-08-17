@@ -10,8 +10,6 @@ declare global {
   }
 }
 
-const DEFAULT_PIXEL_ID = "771518579044462";
-
 function firePageView() {
   const fbq = typeof window !== "undefined" ? window.fbq : null;
   if (typeof fbq !== "function") return;
